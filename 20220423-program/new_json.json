@@ -1,0 +1,59 @@
+{
+    "is_save_stream": false,
+    "is_anti_shake": false,
+    "is_ref_refresh": false,
+    "winsize": 64,
+    "mag_ceiling": 0.8,
+    "mag_floor": 0,
+    "alpha": 0.8,
+    "hue": 90,
+    "result_RES": [
+      640,
+      480
+    ],
+    "pyr_scale": 0.5,
+    "levels": 2,
+    "iterations": 1,
+    "poly_n": 5,
+    "poly_sigma": 1.1,
+    "Noffset": 0,
+    "ax": [],
+    "ay1": [],
+    "ay2": [],
+    "solution": [
+      {
+        "options": {
+          "CAP_PROP_FRAME_WIDTH": 2592,
+          "CAP_PROP_FRAME_HEIGHT": 1944,
+          "CAP_PROP_FPS": 30
+        },
+        "RES": [
+          2592,
+          1944
+        ],
+        "roi_rect": [
+          200,
+          2392,
+          50,
+          1344
+        ]
+      },
+      {
+        "options": {
+          "CAP_PROP_FRAME_WIDTH": 2592,
+          "CAP_PROP_FRAME_HEIGHT": 1944,
+          "CAP_PROP_FPS": 30
+        },
+        "RES": [
+          800,
+          600
+        ],
+        "roi_rect": [
+          1,
+          799,
+          1,
+          599
+        ]
+      }
+    ]
+  }
