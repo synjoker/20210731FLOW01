@@ -27,7 +27,7 @@ class BOSdetect:
     def hsv2rgb(h, s, v):
         return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
 
-    def LoadJson(self, jsonpath='20220423-program/bosparameters.json'):
+    def LoadJson(self, jsonpath='20230329-bosparameters.json'):
         f = open(jsonpath, 'r')
         content = f.read()
         self.para = json.loads(content)
@@ -287,7 +287,7 @@ class BOSdetect:
 if __name__ == "__main__":
     bos = BOSdetect()
     bos.count = 0
-    jsonpath = '20220423-program/bosparameters.json'
+    jsonpath = '20230329-bosparameters.json'
     bos.LoadJson()
     bos.PicPreProcess()
     print("begin stream!")
