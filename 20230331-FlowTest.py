@@ -32,23 +32,6 @@ def my_conv(input, kernel, step):
             res[i][j] = b.sum()   
     return res
 
-# 自定义鼠标双击事件——获取图像坐标
-# 1. 对图像进行操作，同时生成一副新的图像；
-# maybe需要多线程
-# 2. 对视频实施爬取，读取连续图像，并且可以生成曲线图；
-# 还是需要多线程
-
-frame_cur = np.zeros((512,512,3), np.uint8)
-def get_coord(event,x,y,flags,param):
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        cv2.circle(frame_cur,(x,y),100,(255,0,0),-1)
-        if cv2.waitKey() & 0xFF ==27 :
-            print("Continue Play!")
-        
-# Create a black image, a window and bind the function to window
-cv2.namedWindow('Orignal')
-cv2.setMouseCallback('Orignal',get_coord)
-
 #control parameters
 is_save_stream = False
 is_anti_shake = False
@@ -82,7 +65,7 @@ Noffset = 30 # 消除光流算法偏差的位移量
 # drawing buffer
 ax = []
 ay1 = []
-ay2 = []
+ay2 = [] 
 #plt.ion()
 
 # 水平噪声、数值噪声
@@ -101,6 +84,8 @@ blank = np.zeros_like(frame_pre)
 
 # video loop
 count = 0
+total_time = 0
+time_count = 0
 print("begin stream!")
 
 while True:
@@ -109,7 +94,7 @@ while True:
         if frame_cur is None:
             print("video has played over!")
             break
-        # 跳过不需要的帧
+        start_time = time.time()  # 记录程序开始运行时间
         count += 1
         if count < 60:
             print("%d times"% count)
@@ -122,13 +107,13 @@ while True:
         if is_change_size:
             # 改变图像大小
             # resize_resolution = [1296, 972]    
-            resize_resolution = [800, 600]
-            frame_pre   = cv2.resize(frame_pre ,resize_resolution)
-            frame_cur   = cv2.resize(frame_cur ,resize_resolution)
-            bgr_pre     = cv2.resize(bgr_pre ,resize_resolution)
-            bgr_cur     = cv2.resize(bgr_cur ,resize_resolution)
-            hsv         = cv2.resize(hsv ,resize_resolution)
-            blank       = cv2.resize(blank ,resize_resolution)
+            resize_resolution   = [800, 600]
+            frame_pre           = cv2.resize(frame_pre ,resize_resolution)
+            frame_cur           = cv2.resize(frame_cur ,resize_resolution)
+            bgr_pre             = cv2.resize(bgr_pre ,resize_resolution)
+            bgr_cur             = cv2.resize(bgr_cur ,resize_resolution)
+            hsv                 = cv2.resize(hsv ,resize_resolution)
+            blank               = cv2.resize(blank ,resize_resolution)
         
         # 图像裁切
         roi_bgr_pre = bgr_pre
@@ -143,6 +128,7 @@ while True:
                                         poly_sigma,
                                         flags)
         mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])  # orginal flow
+        # 结果矩阵为mag，调用到鼠标事件中
         
         # 绘制矢量箭头方案一：opencv-arrowedline
         min_arrowline_threshold = 1.5   # 矢量箭头阈值下限（与矢量平均值相除）
@@ -180,36 +166,12 @@ while True:
         bgr_flow_enhanced = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
 
         # image emerge with enhanced flow
-        flow_blend_enhance = cv2.addWeighted(frame_cur, 1-alpha ,bgr_flow_enhanced,  alpha, 0)
         bgr_blend = cv2.addWeighted(frame_cur, 1-alpha ,bgr_flow,  alpha, 0)
-        frame_blend = flow_blend_enhance
+
         
         if is_ref_refresh:
             bgr_pre = bgr_cur
         
-        #palette
-        palette=np.zeros((512,512,3),np.uint8)
-        mag_norm = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
-        mag_min,mag_max,min_indx,max_indx=cv2.minMaxLoc(mag)
-        ang_mean = cv2.mean(ang*mag/mag_mean)[0]
-
-        # 对结果矩阵偏移的修正
-        horMat = np.multiply(mag, np.cos(ang))
-        verMat = np.multiply(mag, np.sin(ang))
-
-        # 计算水平噪声最大值和竖直噪声最大值
-        _,hor_MaxNoise, _, _ = cv2.minMaxLoc(np.multiply(mag, np.cos(ang)))
-        _,ver_MaxNoise, _, _ = cv2.minMaxLoc(np.multiply(mag, np.sin(ang)))
-
-
-        # 计算水平噪声和竖直噪声
-        hor_Noise = np.average(np.multiply(mag, np.cos(ang)))
-        ver_Noise = np.average(np.multiply(mag, np.sin(ang)))
-        # # 绝对值计算水平噪声和竖直噪声
-        # hor_AbsNoise = np.average(np.abs(horMat))
-        # ver_AbsNoise = np.average(np.abs(verMat))
-
- 
     except Exception:
         # read current frame from cap
         print("something wrong!")
@@ -217,33 +179,30 @@ while True:
         raise
     
     else:
-        
-        print("nothing wrong!")
-        print("%d times"% count)
-        cv2.putText(palette, "max="+str(mag.max()), (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "mag_mean="+str("%.7f"%mag_mean), (0, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "mag_max="+str(mag_max), (0, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "mag_min="+str(mag_min), (0, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "hor_Noise="+str(hor_Noise), (0, 150), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "ver_Noise="+str(ver_Noise), (0, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "hor_MaxNoise="+str(hor_MaxNoise), (0, 210), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-        cv2.putText(palette, "ver_MaxNoise="+str(ver_MaxNoise), (0, 240), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
-
         # # result flow image
-        cv2.imshow('Orignal',cv2.resize(frame_cur, (result_RES[0], result_RES[1])))
-        cv2.imshow("Palette", palette)
-        cv2.imshow('Blender', cv2.resize(bgr_blend , (result_RES[0], result_RES[1])))
-        cv2.imshow('Area of Intrest Blended', cv2.resize(frame_blend  , (result_RES[0], result_RES[1])))
+        print("nothing wrong!")
+        end_time = time.time()  # 记录程序结束运行时间
+        print("{} times use {}s".format(count, end_time - start_time))
+        time_count += 1 
+        total_time += end_time - start_time
+        # # cv2.imshow('Orignal',cv2.resize(frame_cur, (result_RES[0], result_RES[1]))) # resize函数的显示窗口会对鼠标事件产生干扰！
+        # cv2.putText(frame_cur, "Frame is:{} ".format(count), (10, 35), cv2.FONT_HERSHEY_PLAIN,
+        #                 3.0, (0,0,0), thickness = 3) 
         
+        # cv2.imshow('Orignal', frame_cur)
+        # cv2.imshow('Blender', cv2.resize(bgr_blend , (result_RES[0], result_RES[1])))
+        
+        # keyboard event
+        # key 'r'   : refresh img
+        # key 'q'   : quit
+        # key 'ESC' : quit mouse event
         key = cv2.waitKey(1)
-        
         if key == ord("r"):
             bgr_pre = bgr_cur
             print("Background Refresh!")
-            
         if key == ord("q"):
             print("KeyboardInterrupt!")
             break
-
-  
+print("average is {}s!".format(total_time/time_count))
 cv2.destroyAllWindows()
+stream.stop()  
