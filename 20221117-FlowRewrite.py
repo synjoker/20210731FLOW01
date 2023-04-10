@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
-import queue, threading, time
+import queue
+import threading
+import time
 from configparser import ConfigParser
 from numpy.core.numeric import zeros_like
 import matplotlib.pyplot as plt
@@ -23,7 +25,7 @@ class BOSdetect:
         self.count = 0
         pass
 
-    #hsv transform to rgb format
+    # hsv transform to rgb format
     def hsv2rgb(h, s, v):
         return tuple(round(i * 255) for i in colorsys.hsv_to_rgb(h, s, v))
 
@@ -42,7 +44,7 @@ class BOSdetect:
             source=cameraNum,
             stabilize=self.para['is_anti_shake'],
             **self.solution['options']).start(
-            )  # To open any valid video stream(for e.g device at 0 index)
+        )  # To open any valid video stream(for e.g device at 0 index)
         # pre-read frame
         self.frame_pre = self.stream.read()
         print("video reself.solution is (height, width, channel) : ",
@@ -55,7 +57,7 @@ class BOSdetect:
                            self.para['Noffset'], self.solution['roi_rect'][0] +
                            self.para['Noffset']:self.solution['roi_rect'][1] -
                            self.para['Noffset']])
-        self.hsv[..., 1] = 255  #saturation is full
+        self.hsv[..., 1] = 255  # saturation is full
         self.blank = np.zeros_like(self.frame_pre)
 
     def GreypicView(self):
@@ -129,7 +131,7 @@ class BOSdetect:
             self.bgr_flow_enhanced, self.para['alpha'], 0)
         self.frame_blend = cv2.addWeighted(frame_cur, 0.6,
                                            self.blank, 0.1,
-                                           0)  #frame_cur.copy()
+                                           0)  # frame_cur.copy()
         self.frame_blend[self.solution['roi_rect'][2] +
                          self.para['Noffset']:self.solution['roi_rect'][3] -
                          self.para['Noffset'], self.solution['roi_rect'][0] +
@@ -144,7 +146,7 @@ class BOSdetect:
         #         (self.para['result_RES'][0], self.para['result_RES'][1])))
 
     def PattleView(self):
-        #palette
+        # palette
         palette = np.zeros((512, 512, 3), np.uint8)
         mag_norm = cv2.normalize(self.mag, None, 0, 255, cv2.NORM_MINMAX)
         self.mag_min, self.mag_max, self.min_indx, self.max_indx = cv2.minMaxLoc(
@@ -258,7 +260,7 @@ class BOSdetect:
 
     def KeyboardRecord(self):
         if self.key == ord('r'):  # if input key 'r', refresh compare image
-            #打印时间戳保存
+            # 打印时间戳保存
             # timeNow1 = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             # os.makedirs("Refresh_" + timeNow1)
             self.bgr_pre = self.bgr_cur
